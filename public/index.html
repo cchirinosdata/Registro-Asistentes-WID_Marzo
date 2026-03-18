@@ -82,21 +82,40 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
 
     .btn-refresh {
-      background: var(--surface);
-      border: 1.5px solid var(--border2);
-      padding: 8px 12px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-refresh:active { background: var(--surface2); transform: scale(0.96); }
-    .spinning { animation: spin 1s linear infinite; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  padding: 8px 16px;
+  border-radius: 99px; /* Forma de píldora, más estética */
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+    .btn-refresh:active {
+  transform: scale(0.95);
+  background: var(--surface2);
+}
+
+.refresh-icon {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+/* Solo el icono girará, no el texto */
+.spinning-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
 
     /* Stats */
     .stats {
@@ -270,27 +289,32 @@
   }
 
   async function loadAll() {
-    const btn = document.getElementById('btn-refresh');
-    btn.classList.add('spinning');
-    try {
-      const res = await api({ action: 'getAll' });
-      if (res.ok) {
-        // Mapeamos los datos para asegurar que los 'Nuevos' se mantengan como tales
-        // Si tu Apps Script no envía 'isNew', podrías identificar por lógica de hojas
-        attendees = res.data; 
-        updateStats();
-        const now = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('sync-label').textContent = `Sinc: ${now}`;
-        document.getElementById('dot').className = 'dot';
-        renderResults();
-      }
-    } catch (e) {
-      document.getElementById('dot').className = 'dot error';
-      document.getElementById('sync-label').textContent = 'Error red';
-    } finally {
-      setTimeout(() => btn.classList.remove('spinning'), 500);
+  const btn = document.getElementById('btn-refresh');
+  const icon = document.getElementById('refresh-icon');
+  
+  // Iniciamos la animación solo en el circulito
+  icon.classList.add('spinning-icon');
+  btn.disabled = true;
+
+  try {
+    const res = await api({ action: 'getAll' });
+    if (res.ok) {
+      attendees = res.data;
+      updateStats();
+      const now = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('sync-label').textContent = `Sinc: ${now}`;
+      document.getElementById('dot').className = 'dot';
+      renderResults();
     }
+  } catch (e) {
+    document.getElementById('dot').className = 'dot error';
+    document.getElementById('sync-label').textContent = 'Error de red';
+  } finally {
+    // Quitamos la animación al terminar
+    icon.classList.remove('spinning-icon');
+    btn.disabled = false;
   }
+}
 
   function renderResults() {
     const q = document.getElementById('q').value.trim();
