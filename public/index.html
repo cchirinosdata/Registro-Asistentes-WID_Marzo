@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Asistentes</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface2: #f0ede8;
+      --text: #1a1916;
+      --text2: #6b6860;
+      --text3: #a8a59f;
+      --border: rgba(26,25,22,0.1);
+      --border2: rgba(26,25,22,0.2);
+      --green: #1a7a58;
+      --green-bg: #e8f5ef;
+      --green-light: #b8e0ce;
+      --amber: #9a6200;
+      --amber-bg: #fef3dc;
+      --red: #9a2b2b;
+      --red-bg: #fdeaea;
+      --accent: #2d5be3;
+      --accent-bg: #eaeffd;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px 16px 48px;
+    }
+
+    .app {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    .header-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .sync-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text2);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 10px;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    .dot.error { background: var(--red); animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+    .btn-refresh {
+      background: var(--surface);
+      border: 1.5px solid var(--border2);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-refresh:active { background: var(--surface2); transform: scale(0.96); }
+    .spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text3);
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .stat-value.green { color: var(--green); }
+    .stat-value.blue { color: var(--accent); }
+
+    /* Search */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: 16px 44px 16px 48px;
+      font-size: 16px;
+      font-family: 'DM Sans', sans-serif;
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--surface);
+      outline: none;
+    }
+    .search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,91,227,.1); }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 20px; }
+    .clear-btn {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--surface2); border: none; font-size: 18px;
+      display: none; align-items: center; justify-content: center;
+    }
+
+    /* Cards */
+    .card {
+      display: flex; align-items: center; gap: 12px; padding: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 8px;
+    }
+    .card.attended { background: var(--green-bg); border-color: var(--green-light); }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; }
+    .av-default { background: var(--surface2); color: var(--text2); }
+    .av-ok { background: var(--green-light); color: var(--green); }
+    .person-info { flex: 1; min-width: 0; }
+    .person-name { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .person-dni { font-size: 13px; color: var(--text2); font-family: 'DM Mono', monospace; }
+    .btn-reg { padding: 10px 18px; font-size: 14px; font-weight: 600; border-radius: var(--radius-sm); border: 1.5px solid var(--green); background: var(--green-bg); color: var(--green); cursor: pointer; }
+    .badge-ok { font-size: 14px; font-weight: 600; color: var(--green); }
+
+    /* Forms */
+    .new-form { background: var(--amber-bg); border: 1.5px solid #f0c060; border-radius: var(--radius); padding: 16px; margin-top: 8px; }
+    .new-form-title { font-size: 13px; font-weight: 600; color: var(--amber); margin-bottom: 12px; }
+    .new-form input { width: 100%; padding: 14px; font-size: 16px; border: 1.5px solid rgba(154,98,0,0.2); border-radius: var(--radius-sm); margin-bottom: 12px; outline: none; }
+    .btn-add { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border-radius: var(--radius-sm); border: none; background: var(--green); color: white; cursor: pointer; }
+
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); padding: 12px 24px; border-radius: 99px; font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 1000; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--green); color: white; }
+    .toast.error { background: var(--red); color: white; }
+    .hint { font-size: 12px; color: var(--text3); text-align: center; margin-bottom: 10px; display: none; }
+    .empty { text-align: center; padding: 40px 20px; color: var(--text2); }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <h1>Registro</h1>
+    <div class="header-right">
+      <div class="sync-badge">
+        <span class="dot" id="dot"></span>
+        <span id="sync-label">conectando...</span>
+      </div>
+      <button onclick="loadAll()" class="btn-refresh" id="btn-refresh">🔄 Refrescar</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total Hoy</div>
+      <div class="stat-value" id="s-total">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Pre-inscritos</div>
+      <div class="stat-value green" id="s-pre">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Nuevos</div>
+      <div class="stat-value blue" id="s-new">0</div>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="q" placeholder="DNI o nombre..." autocomplete="off" oninput="onSearch()" onkeydown="onKey(event)">
+    <button class="clear-btn" id="clear-btn" onclick="clearSearch()">×</button>
+  </div>
+
+  <div class="hint" id="hint">Presiona <kbd>Enter</kbd> para registrar</div>
+
+  <div id="results">
+    <div class="empty">Escribe un DNI o nombre para buscar</div>
+  </div>
+
+  <div id="new-form" style="display:none" class="new-form">
+    <div class="new-form-title">⚠ No encontrado: Registrar como nuevo</div>
+    <input type="text" id="new-nombre" placeholder="Nombre completo..." onkeydown="if(event.key==='Enter')addNew()">
+    <button class="btn-add" id="btn-add" onclick="addNew()">Registrar y Marcar Asistencia</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = '/api/sheets';
+  let attendees = [];
+  let searchResults = [];
+
+  async function api(params) {
+    const qs = new URLSearchParams(params).toString();
+    const r = await fetch(`${API}?${qs}`);
+    if (!r.ok) throw new Error('Error en API');
+    return r.json();
+  }
+
+  function toast(msg, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `toast ${type} show`;
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  function updateStats() {
+    const asistieron = attendees.filter(a => a.asistio);
+    // Asumimos que si vienen de la hoja 'Nuevos' el Apps Script podría enviar un flag
+    // Por ahora, lo manejamos localmente si el registro fue creado en la sesión actual
+    const pre = asistieron.filter(a => !a.isNew).length;
+    const nuevos = asistieron.filter(a => a.isNew).length;
+
+    document.getElementById('s-total').textContent = asistieron.length;
+    document.getElementById('s-pre').textContent = pre;
+    document.getElementById('s-new').textContent = nuevos;
+  }
+
+  function initials(nombre) {
+    return nombre.trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+  }
+
+  async function loadAll() {
+    const btn = document.getElementById('btn-refresh');
+    btn.classList.add('spinning');
+    try {
+      const res = await api({ action: 'getAll' });
+      if (res.ok) {
+        // Mapeamos los datos para asegurar que los 'Nuevos' se mantengan como tales
+        // Si tu Apps Script no envía 'isNew', podrías identificar por lógica de hojas
+        attendees = res.data; 
+        updateStats();
+        const now = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('sync-label').textContent = `Sinc: ${now}`;
+        document.getElementById('dot').className = 'dot';
+        renderResults();
+      }
+    } catch (e) {
+      document.getElementById('dot').className = 'dot error';
+      document.getElementById('sync-label').textContent = 'Error red';
+    } finally {
+      setTimeout(() => btn.classList.remove('spinning'), 500);
+    }
+  }
+
+  function renderResults() {
+    const q = document.getElementById('q').value.trim();
+    const resultsEl = document.getElementById('results');
+    const newFormEl = document.getElementById('new-form');
+    const hintEl = document.getElementById('hint');
+
+    if (!q) {
+      resultsEl.innerHTML = '<div class="empty">Escribe un DNI o nombre para buscar</div>';
+      newFormEl.style.display = 'none';
+      hintEl.style.display = 'none';
+      return;
+    }
+
+    const ql = q.toLowerCase();
+    searchResults = attendees.filter(a => a.dni.includes(q) || a.nombre.toLowerCase().includes(ql));
+
+    if (!searchResults.length) {
+      resultsEl.innerHTML = '<div class="empty">👤 No encontrado</div>';
+      newFormEl.style.display = 'block';
+      hintEl.style.display = 'none';
+      return;
+    }
+
+    newFormEl.style.display = 'none';
+    const firstPending = searchResults.find(p => !p.asistio);
+    hintEl.style.display = firstPending ? 'block' : 'none';
+
+    resultsEl.innerHTML = searchResults.slice(0, 5).map(p => `
+      <div class="card ${p.asistio ? 'attended' : ''}">
+        <div class="avatar ${p.asistio ? 'av-ok' : 'av-default'}">${initials(p.nombre)}</div>
+        <div class="person-info">
+          <div class="person-name">${p.nombre}</div>
+          <div class="person-dni">${p.dni}</div>
+        </div>
+        ${p.asistio ? '<span class="badge-ok">✓</span>' : `<button class="btn-reg" onclick="markAttended('${p.dni}')">OK</button>`}
+      </div>
+    `).join('');
+  }
+
+  async function markAttended(dni) {
+    const p = attendees.find(a => a.dni === dni);
+    if (!p || p.asistio) return;
+    p.asistio = true;
+    updateStats();
+    renderResults();
+    try {
+      const res = await api({ action: 'markAttended', dni });
+      if (res.ok) {
+        toast(`✓ Registrado`);
+        setTimeout(clearSearch, 1000);
+      }
+    } catch (e) {
+      p.asistio = false;
+      updateStats();
+      toast('Error conexión', 'error');
+    }
+  }
+
+  async function addNew() {
+    const dni = document.getElementById('q').value.trim();
+    const nombre = document.getElementById('new-nombre').value.trim();
+    if (!nombre) return;
+    const btn = document.getElementById('btn-add');
+    btn.disabled = true;
+    try {
+      const res = await api({ action: 'addNew', dni, nombre });
+      if (res.ok) {
+        attendees.push({ dni, nombre, asistio: true, isNew: true });
+        updateStats();
+        toast('✓ Nuevo registrado');
+        clearSearch();
+      }
+    } catch (e) {
+      toast('Error al guardar', 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function onSearch() {
+    document.getElementById('clear-btn').style.display = document.getElementById('q').value ? 'flex' : 'none';
+    renderResults();
+  }
+
+  function onKey(e) {
+    if (e.key === 'Enter') {
+      const first = searchResults.find(p => !p.asistio);
+      if (first) markAttended(first.dni);
+      else if (searchResults.length === 0) document.getElementById('new-nombre').focus();
+    }
+  }
+
+  function clearSearch() {
+    document.getElementById('q').value = '';
+    onSearch();
+    document.getElementById('q').focus();
+  }
+
+  loadAll();
+  setInterval(loadAll, 15000); // Sincronización cada 15 segundos
+</script>
+</body>
+</html>

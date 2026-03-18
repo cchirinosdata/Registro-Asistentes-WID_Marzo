@@ -1,0 +1,5 @@
+{
+  "name": "registro-asistentes",
+  "version": "1.0.0",
+  "description": "App de registro de asistentes conectada a Google Sheets"
+}
