@@ -250,16 +250,17 @@
   }
 
   function updateStats() {
-    const asistieron = attendees.filter(a => a.asistio);
-    // Asumimos que si vienen de la hoja 'Nuevos' el Apps Script podría enviar un flag
-    // Por ahora, lo manejamos localmente si el registro fue creado en la sesión actual
-    const pre = asistieron.filter(a => !a.isNew).length;
-    const nuevos = asistieron.filter(a => a.isNew).length;
+  const asistieron = attendees.filter(a => a.asistio);
+  
+  // Obtenemos los DNI de la pestaña "Nuevos" si el backend los marca, 
+  // o si fueron añadidos en esta sesión localmente.
+  const nuevos = asistieron.filter(a => a.isNew === true).length;
+  const preInscritos = asistieron.length - nuevos;
 
-    document.getElementById('s-total').textContent = asistieron.length;
-    document.getElementById('s-pre').textContent = pre;
-    document.getElementById('s-new').textContent = nuevos;
-  }
+  document.getElementById('s-total').textContent = asistieron.length;
+  document.getElementById('s-pre').textContent = preInscritos;
+  document.getElementById('s-new').textContent = nuevos;
+}
 
   function initials(nombre) {
     return nombre.trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
